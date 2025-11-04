@@ -21,7 +21,7 @@ class CircleShape(pygame.sprite.Sprite):
         # sub-classes must override
         pass
 
-    def collision(self, other):
+    def collides_with(self, other):
         """
         Checks for collision between this CircleShape and another CircleShape object.
         Collision occurs if the distance between centers is less than or equal to 

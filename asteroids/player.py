@@ -1,6 +1,7 @@
 import pygame
 from circleshape import CircleShape
-from constants import PLAYER_RADIUS, PLAYER_TURN_SPEED, PLAYER_SPEED
+from constants import *
+from shot import Shot
 
 class Player(CircleShape):
     def __init__(self, x, y):
@@ -14,35 +15,17 @@ class Player(CircleShape):
         # Call the parent class's constructor, passing in PLAYER_RADIUS for the hitbox
         super().__init__(x, y, PLAYER_RADIUS)
         self.rotation = 0
+        self.shoot_timer = 0
     
     def rotate(self, dt):
         """
         Checks for rotational input and calls the rotate method.
         """
         self.rotation += PLAYER_TURN_SPEED * dt
-
-    def update(self, dt):
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_a]:
-            # Left rotation: Call rotate with negative dt to reverse direction
-            self.rotate(-dt)
-        if keys[pygame.K_d]:
-            # Right rotation: Call rotate with positive dt
-            self.rotate(dt)
-        if keys[pygame.K_w]:
-            # Move forward
-            self.move(dt)
-        if keys[pygame.K_s]:
-            # Move Backwards
-            self.move(-dt)
     
-    def move(self, dt):
-        """
-        Adjusts the player's position based on its current rotation, speed, and dt.
-        """
+    def move(self, dt, direction = 1):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
-        self.position += forward * PLAYER_SPEED * dt
+        self.position += forward * PLAYER_SPEED * dt * direction
     
     def triangle(self):
         """
@@ -80,3 +63,44 @@ class Player(CircleShape):
             self.triangle(),
             2
             )
+        
+    def shoot(self):
+        if self.shoot_timer > 0:
+            return
+        
+        self.shoot_timer = PLAYER_SHOOT_COOLDOWN
+
+        # create new shot
+        new_shot = Shot(self.position.x, self.position.y)
+
+        # 2. Calculate and set velocity:
+        # Start with a unit vector (0, 1) pointing forward (up the screen)
+        # Rotate it by the player's rotation
+        forward_vector = pygame.Vector2(0, 1).rotate(self.rotation)
+
+        # Scale it up by the shot speed
+        new_shot.velocity = forward_vector * PLAYER_SHOT_SPEED
+    
+    def update(self, dt):
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_a]:
+            # Left rotation: Call rotate with negative dt to reverse direction
+            self.rotate(-dt)
+        if keys[pygame.K_d]:
+            # Right rotation: Call rotate with positive dt
+            self.rotate(dt)
+        if keys[pygame.K_w]:
+            # Move forward
+            self.move(dt, direction = 1)
+        if keys[pygame.K_s]:
+            # Move Backwards
+            self.move(dt, direction = -1)
+        if keys[pygame.K_SPACE]:
+            # Spacebar to shoot bullets
+            self.shoot()
+
+        if self.shoot_timer > 0:
+            self.shoot_timer -= dt
+            if self.shoot_timer < 0:
+                self.shoot_timer = 0
